@@ -1,0 +1,1 @@
+local a={}function a.visual_selection_range()local b,c,d,b=unpack(vim.fn.getpos("'<"))local b,e,f,b=unpack(vim.fn.getpos("'>"))if d>100000 or f>100000 then return-1,-1,-1,0 end;if c<e or c==e and d<=f then return c-1,d-1,e-1,f else return e-1,f-1,c-1,d end end;return a

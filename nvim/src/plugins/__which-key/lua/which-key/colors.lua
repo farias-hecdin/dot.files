@@ -1,0 +1,1 @@
+local a={}local b={[""]="Function",Separator="Comment",Group="Keyword",Desc="Identifier",Float="NormalFloat",Border="FloatBorder",Value="Comment"}function a.setup()for c,d in pairs(b)do vim.api.nvim_set_hl(0,"WhichKey"..c,{link=d,default=true})end end;return a

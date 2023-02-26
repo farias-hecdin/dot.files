@@ -1,0 +1,1 @@
+local a=require"fzf-lua.core"local b=require"fzf-lua.utils"local c=require"fzf-lua.config"local d={}d.manpages=function(e)e=c.normalize_opts(e,c.globals.manpages)if not e then return end;e.fn_transform=function(f)local g,h=f:match("^(.-) %- (.*)$")return string.format("%-45s %s",b.ansi_codes.magenta(g),h)end;e.fzf_opts["--no-multi"]=""a.fzf_exec(e.cmd,e)end;return d

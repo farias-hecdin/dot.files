@@ -1,0 +1,1 @@
+local a=require("plenary.path")local b={}function b.project_key()return vim.loop.cwd()end;function b.normalize_path(c)return a:new(a:new(c):absolute()):make_relative(b.project_key())end;function b.absolute_path(c)return a:new(c):absolute()end;function b.is_white_space(d)return d:gsub("%s","")==""end;return b

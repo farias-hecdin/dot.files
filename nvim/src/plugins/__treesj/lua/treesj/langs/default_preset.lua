@@ -1,0 +1,1 @@
+return{both={no_format_with={'comment'},separator='',last_separator=false,omit={},non_bracket_node=false,format_empty_node=true},join={space_in_brackets=false,space_separator=1,force_insert='',no_insert_if={},recursive=true,recursive_ignore={}},split={recursive=false,recursive_ignore={},last_indent='normal'},disable=false,target_nodes={}}

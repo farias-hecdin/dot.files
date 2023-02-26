@@ -1,0 +1,14 @@
+MiniJump2d	mini-jump2d.txt	/*MiniJump2d*
+MiniJump2d.builtin_opts	mini-jump2d.txt	/*MiniJump2d.builtin_opts*
+MiniJump2d.builtin_opts.default	mini-jump2d.txt	/*MiniJump2d.builtin_opts.default*
+MiniJump2d.builtin_opts.line_start	mini-jump2d.txt	/*MiniJump2d.builtin_opts.line_start*
+MiniJump2d.builtin_opts.query	mini-jump2d.txt	/*MiniJump2d.builtin_opts.query*
+MiniJump2d.builtin_opts.single_character	mini-jump2d.txt	/*MiniJump2d.builtin_opts.single_character*
+MiniJump2d.builtin_opts.word_start	mini-jump2d.txt	/*MiniJump2d.builtin_opts.word_start*
+MiniJump2d.config	mini-jump2d.txt	/*MiniJump2d.config*
+MiniJump2d.default_spotter	mini-jump2d.txt	/*MiniJump2d.default_spotter*
+MiniJump2d.gen_pattern_spotter()	mini-jump2d.txt	/*MiniJump2d.gen_pattern_spotter()*
+MiniJump2d.setup()	mini-jump2d.txt	/*MiniJump2d.setup()*
+MiniJump2d.start()	mini-jump2d.txt	/*MiniJump2d.start()*
+MiniJump2d.stop()	mini-jump2d.txt	/*MiniJump2d.stop()*
+mini.jump2d	mini-jump2d.txt	/*mini.jump2d*

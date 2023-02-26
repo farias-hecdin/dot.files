@@ -1,0 +1,7 @@
+MiniComment	mini-comment.txt	/*MiniComment*
+MiniComment.config	mini-comment.txt	/*MiniComment.config*
+MiniComment.operator()	mini-comment.txt	/*MiniComment.operator()*
+MiniComment.setup()	mini-comment.txt	/*MiniComment.setup()*
+MiniComment.textobject()	mini-comment.txt	/*MiniComment.textobject()*
+MiniComment.toggle_lines()	mini-comment.txt	/*MiniComment.toggle_lines()*
+mini.comment	mini-comment.txt	/*mini.comment*

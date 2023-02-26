@@ -1,0 +1,1 @@
+local a={}a.configured_langs={'javascript','typescript','lua','html','json','vue','css','scss','tsx','php','ruby','go','java','pug','svelte','rust','python','r','cpp','c'}a.presets={}for b,c in ipairs(a.configured_langs)do a.presets[c]=require('treesj.langs.'..c)end;return a

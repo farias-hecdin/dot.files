@@ -1,0 +1,1 @@
+local a={}function a.check()local b=vim.fn;local c=b['health#report_ok']local d=b['health#report_error']local e,f=pcall(vim.fn.systemlist,{'git','--version'})if not e then d(f)else c(f[1])end end;return a

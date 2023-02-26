@@ -1,0 +1,7 @@
+MiniCursorword	mini-cursorword.txt	/*MiniCursorword*
+MiniCursorword.auto_highlight()	mini-cursorword.txt	/*MiniCursorword.auto_highlight()*
+MiniCursorword.auto_unhighlight()	mini-cursorword.txt	/*MiniCursorword.auto_unhighlight()*
+MiniCursorword.config	mini-cursorword.txt	/*MiniCursorword.config*
+MiniCursorword.setup()	mini-cursorword.txt	/*MiniCursorword.setup()*
+before	mini-cursorword.txt	/*before*
+mini.cursorword	mini-cursorword.txt	/*mini.cursorword*

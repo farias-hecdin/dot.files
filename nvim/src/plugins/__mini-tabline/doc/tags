@@ -1,0 +1,5 @@
+MiniTabline	mini-tabline.txt	/*MiniTabline*
+MiniTabline.config	mini-tabline.txt	/*MiniTabline.config*
+MiniTabline.make_tabline_string()	mini-tabline.txt	/*MiniTabline.make_tabline_string()*
+MiniTabline.setup()	mini-tabline.txt	/*MiniTabline.setup()*
+mini.tabline	mini-tabline.txt	/*mini.tabline*

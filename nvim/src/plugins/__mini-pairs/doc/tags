@@ -1,0 +1,13 @@
+MiniPairs	mini-pairs.txt	/*MiniPairs*
+MiniPairs.bs()	mini-pairs.txt	/*MiniPairs.bs()*
+MiniPairs.close()	mini-pairs.txt	/*MiniPairs.close()*
+MiniPairs.closeopen()	mini-pairs.txt	/*MiniPairs.closeopen()*
+MiniPairs.config	mini-pairs.txt	/*MiniPairs.config*
+MiniPairs.cr()	mini-pairs.txt	/*MiniPairs.cr()*
+MiniPairs.map()	mini-pairs.txt	/*MiniPairs.map()*
+MiniPairs.map_buf()	mini-pairs.txt	/*MiniPairs.map_buf()*
+MiniPairs.open()	mini-pairs.txt	/*MiniPairs.open()*
+MiniPairs.setup()	mini-pairs.txt	/*MiniPairs.setup()*
+MiniPairs.unmap()	mini-pairs.txt	/*MiniPairs.unmap()*
+MiniPairs.unmap_buf()	mini-pairs.txt	/*MiniPairs.unmap_buf()*
+mini.pairs	mini-pairs.txt	/*mini.pairs*

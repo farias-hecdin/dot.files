@@ -1,0 +1,1 @@
+local a=require('treesj.langs.utils')return a.merge_preset(require('treesj.langs.c'),{template_argument_list=a.set_preset_for_args(),template_parameter_list=a.set_preset_for_args(),template_declaration={target_nodes={'template_parameter_list'}},template_type={target_nodes={'template_argument_list'}}})

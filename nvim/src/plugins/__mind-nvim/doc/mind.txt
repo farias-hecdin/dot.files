@@ -1,0 +1,969 @@
+mind.txt*    For Neovim version 0.7.2                 Last change: 2022 Sep 04
+
+==============================================================================
+CONTENTS                                                         *mind-contents*
+
+  Introduction ············································· |mind-introduction|
+  Requirements ············································· |mind-requirements|
+  Usage ··························································· |mind-usage|
+    Commands ··················································· |mind-commands|
+    Lua API ····················································· |mind-lua-api|
+  Configuration ·················································· |mind-config|
+  Highlights ················································· |mind-highlights|
+  License ······················································· |mind-license|
+
+==============================================================================
+INTRODUCTION                                            *mind* *mind-introduction*
+
+Mind is an organizational plugin for Neovim for people wanting to take notes,
+organize journals and tasks, or basically manipulate various kinds of
+“metadata” in trees. Everything in Mind can be thought of as being part of a
+tree.
+
+Non-exhaustive feature set:
+
+- Markup agnostic. The plugin is only about organizing documents. You decide
+  which markup to use.
+- Tree views. Everything is put in a tree, that you can operate on by
+  expanding, collapsing or triggering. Most operations on trees are supported:
+  creating a new node in a tree, adding children, removing nodes, renaming
+  nodes, moving nodes before/after/inside another node (the latter operation
+  would turn the node into a sub-tree, if already one), etc.
+- Nodes and files don’t necessarily map. The tree is just the metadata. You
+  don’t have to create a file for an entry in the tree.
+- Three different kind of trees: global trees are stored in a single place on
+  your filesystem and can be open from anywhere. CWD-based trees are still
+  stored at the same place as global trees, but they can only be open if your
+  |cwd| is the same as the tree. Finally, local trees are very similar to
+  cwd-based trees, but they are stored inside |cwd| as well (in a `.mind`
+  directory), allowing for easy sharing.
+- Support simple link creation for creating links between documents easily.
+- Filtering, fuzzy search, etc. inside the tree directly. Fuzzy searching flat
+  lists is already powerful. Fuzzy searching a tree is even more powerful.
+
+==============================================================================
+REQUIREMENTS                                                 *mind-requirements*
+
+Mind works only with Neovim and was written with Neovim-0.7.2, so it is highly
+recommended to use Neovim version 0.7.2+.
+
+==============================================================================
+USAGE                                                               *mind-usage*
+
+Before doing anything else, you have to setup the plugin. If you are not using
+a package manager or environment doing that automatically for you, you need to
+call the |mind.setup| function to correctly initialize the plugin.
+
+For a minimal setup:
+
+For people using init.lua~
+
+In your `init.lua`, add:
+>
+            require'mind'.setup()
+<
+For people using init.vim~
+
+In your `init.vim`, add:
+>
+            lua << EOF
+            require'mind'.setup()
+            EOF
+<
+You can pass an optional argument to `setup(opts)` in order to pass {opts}.
+Have a look at |mind.setup| for further details.
+
+                                                                 *mind-commands*
+Commands~
+
+You can try those commands by typing them in your command line. By default,
+they will use the default options for the configuration of Mind. If you want to
+customize how those commands work, have a look at |mind.setup|.
+
+`:MindOpenMain`                                                    *:MindOpenMain*
+    Open the main Mind tree.
+
+    See |mind.open_main| for further information.
+
+`:MindOpenProject` {global}                                     *:MindOpenProject*
+    Open the project tree.
+
+    See |mind.open_project| for further information.
+
+`:MindOpenSmartProject`                                         *:MindOpenSmartProject*
+    Open the project tree, either local, global or prompt the user for which
+    kind of project tree to create.
+
+    See |mind.open_smart_project| for further information.
+
+
+`:MindReloadState`                                              *:MindReloadState*
+    Reload Mind state for global and local trees.
+
+    See |mind.reload_state| for further information.
+
+`:MindClose`                                                          *:MindClose*
+    Close project or main mind tree if open. Resets ui cache.
+
+    See |mind.close| for further information.
+                                                                  *mind-lua-api*
+Lua API~
+
+The Lua API comprises several modules. Even though those modules might have
+more public functions than described here, you are only supposed to use the
+functions in this help page. Using one that is not listed here is considered
+unstable.
+
+`mind`          Entry point and main interface.
+`mind.commands` Available commands.
+`mind.indexing` Indexing feature, especially |mind.indexing.search_index|.
+`mind.keymap`   Keymap getter / setter and operations.
+`mind.node`     Node operations.
+`mind.ui`       Tree rendering and UI functions.
+
+                                                             *mind-lua-api-main*
+Main API~
+
+`mind.setup(`{opts}`)`                                                  *mind.setup*
+    Setup Mind with options.
+
+    This function will setup the Lua API and commands in a way that respects
+    the options you pass. It is mandatory to call that function at some time
+    if you want to be able to use Mind, should it be from the Lua API or
+    Neovim commands.
+
+Arguments:~
+    {opts} List of options. See the |mind-config| section.
+
+`mind.close(``)`                                                        *mind.close*
+    Close project or main mind tree if open using the
+    mind.ui.render_cache.bufnr. Resets ui cache.
+
+`mind.open_main()`                                                *mind.open_main*
+    Open the main tree.
+
+    The main Mind tree is a unique and globally available tree in your
+    filesystem. You can open it whenever you are, whatever the state of
+    Neovim.
+
+    The location of the tree is based on |mind-config-persistence.state_path|
+    for its state and |mind-config-persistence.data_dir| for any data
+    associated with its nodes.
+
+`mind.open_project(`{use_global}`)`                              *mind.open_project*
+    Open the project Mind tree.
+
+    The project tree is a |current-directory|-based Mind tree. |getcwd| gives
+    the current working directory, and then two modes exist:
+
+    - Global project mode: if {global} is passed, the tree is fetched from the
+      global state and globad data directory,
+      |mind-config-persistence.state_path| and |mind-config-persistence.data_dir|.
+      If the tree is not present in the state yet, it is automatically
+      created, empty.
+    - Local tree mode: if `global` is not passed, a local tree is created or
+      open instead. A local tree stores both its state and data in `.mind/`,
+      relative to the |current-directory| set.
+
+    When working with a local tree, its data paths will always be relative to
+    the |current-directory|, so that sharing such trees is easy (for instance,
+    checking them in versionning systems like Git).
+
+Arguments:~
+    {global} Optional. `true` for a global project true, `false` or `nil`
+             otherwise.
+
+`mind.reload_state()`                                          *mind.reload_state*
+    Reload Mind state.
+
+    You might never use this command but if you use different Neovim instances
+    and edit trees in both, you might want to use that command to synchronize
+    the changes in the other Neovim instances.
+
+`mind.wrap_main_tree_fn(`{f}`,` {opts}`)`                     *mind.wrap_main_tree_fn*
+    Wrap a command function with the main Mind tree.
+
+    See |mind-lua-api-commands-functions| for how to write such functions.
+
+Arguments:~
+    {f}      the command function to execute.
+    {opts}   user-defined options.
+
+`mind.wrap_project_tree_fn(`                           *mind.wrap_project_tree_fn*
+  {f}`,`
+  {use_global}`,`
+  {render}`,`
+  {opts}
+`)
+    Wrap a command function with a project Mind tree.
+
+    See |mind-lua-api-commands-functions| for how to write such functions.
+
+Arguments:~
+    {f}          the command function to execute.
+    {use_global} `true` for a global project true, `false` or `nil`
+                 otherwise.
+    {opts}       user-defined options.
+
+`mind.wrap_smart_project_tree_fn(`               *mind.wrap_smart_project_tree_fn*
+  {f}`,`
+  {opts}
+`)
+    Wrap a command function with either the main project Mind tree, or a local
+    one. The decision on which tree to open is as follows:
+
+    1. If a local project tree exists, use it.
+    2. Otherwise, if a global project tree exists, use it.
+    3. If no tree exists, prompt the user for which kind of tree to create.
+
+    See |mind-lua-api-commands-functions| for how to write such functions.
+
+Arguments:~
+    {f}      the command function to execute.
+    {global} optional; `true` for a global project true, `false` or `nil`
+             otherwise.
+    {render} whether to render the tree again after the function has finished.
+    {opts}   user-defined options.
+
+                                                         *mind-lua-api-commands*
+Commands API~
+
+The command API is split into two categories: the declarative interface and
+the function interface.
+                                             *mind-lua-api-commands-declarative*
+The declarative interface allows users to refer to Mind commands by the use of
+strings, mainly in keymaps. A single table contains them:
+`mind.commands.commands`, in the form of a string to function map. Only the
+keys are documented here.
+
+`'toggle_node'`                                         *mind-command-toggle_node*
+    Toggle the node under the cursor.
+
+`'toggle_parent'`                                     *mind-command-toggle_parent*
+    Toggle the node’s parent under the cursor, if any.
+
+`'quit'`                                                       *mind-command-quit*
+    Quit the tree if open.
+
+`'add_above'`                                             *mind-command-add_above*
+    Add a new node above the node under the cursor.
+
+`'add_below'`                                             *mind-command-add_below*
+    Add a new node below the node under the cursor.
+
+`'add_inside_start'`                               *mind-command-add_inside_start*
+    Add a new node inside the node under the cursor, at the beginning of its
+    children.
+
+`'add_inside_end'`                                   *mind-command-add_inside_end*
+    Add a new node inside the node under the cursor, at the end of its
+    children.
+
+`'add_inside_end_index'`                       *mind-command-add_inside_end_index*
+    Add a new node inside the node extracted via the index, at the end of its
+    children.
+
+`'delete'`                                                   *mind-command-delete*
+    Delete the node under the cursor.
+
+`'delete_file'`                                         *mind-command-delete_file*
+    Delete the file associated with the node under the cursor.
+
+`'rename'`                                                   *mind-command-rename*
+    Rename the node under the cursor.
+
+`'open_data'`                                             *mind-command-open_data*
+    Open the data file of the node under the cursor, or URL if any.
+
+    This command will check whether the node is an URL one. If it is, it will
+    open the URL (via the `open` system command). Otherwise, it will open the
+    data file associated with the node.
+
+    If the node doesn’t have data associated with, the function automatically
+    creates the data file and opens it.
+
+`'open_data_index'`                                 *mind-command-open_data_index*
+    Open the data file of the node found by searching the index.
+
+`'copy_node_link'`                                   *mind-command-copy_node_link*
+    Copy the link of the node under the cursor.
+
+    The link is either the data file path if the node is a data node, or its
+    URL if its a URL node, and place the link in the unnamed register (|""|).
+
+`'copy_node_link_index'`                       *mind-command-copy_node_link_index*
+    Copy the link of a node found by searching the index.
+
+`'make_url'`                                               *mind-command-make_url*
+    Turn the node under the cursor into a URL node.
+
+    If the node has data already associated with it, this function will abort
+    with an error message. Otherwise, the user is prompted for the URL to set.
+
+`'change_icon'`                                         *mind-command-change_icon*
+    Change the icon of the node under the cursor.
+
+`'change_icon_menu'`                                *mind-command-change_icon_menu*
+    Change the icon of the node under the cursor by using the icon menu.
+
+    The menu is triggered via |vim.ui.select| (ensure the plugin you use
+    correctly registers itself to |vim.ui.select|). The preset icons can be
+    set in the user configuration with |mind-config-ui.icon_preset|.
+
+`'select'`                                                   *mind-command-select*
+    Select the node under the cursor.
+
+    A selected node can be operated on by functions such as move.
+
+`'select_path'`                                         *mind-command-select_path*
+    Select a node by inputting its path.
+
+    A path has the form `/Node1/Node2/…`, where `/` refers to the root and
+    each segment is the name of a node.
+
+`'move_above'`                                           *mind-command-move_above*
+    Move the selected node above the node under the cursor.
+
+`'move_below'`                                           *mind-command-move_below*
+    Move the selected node below the node under the cursor.
+
+`'move_inside_start'`                             *mind-command-move_inside_start*
+    Move the selected node inside the node under the cursor, at the beginning
+    of its children.
+
+`'move_inside_end'`                                 *mind-command-move_inside_end*
+    Move the selected node inside the node under the cursor, at the end of its
+    children.
+
+                                               *mind-lua-api-commands-functions*
+All functions in the Commands API take a single parameter called {args}. That
+table contains a couple of useful information that command functions will use.
+If you plan on writing your own command, you will have to understand the
+members of that {args} table:
+
+Members:~
+    {get_tree}  a function taking no argument returning the tree the function
+                must operate on.
+    {data_dir}  the data directory the tree is affected to.
+    {save_tree} a function taking no argument to call if you want to persiste
+                the state of the tree .
+    {opts}      the globar or overriden user options.
+
+An important point about command functions is that you don’t have to rely on
+the provided commands (via |mind-lua-api-commands-declarative|). You can also
+create your own commands. In order to do so, you need to create a function
+taking a table as described above — {args} — and set a keybinding for it. You
+can also directly invoke your command with a tree by using
+
+                                                         *mind-lua-api-indexing*
+Indexing API~
+
+The indexing is a powerful feature of Mind, allowing to perform operations one
+trees and nodes by looking them up in an indexed way. Even though the module
+provides several public symbols, you are only interested in a single one:
+|mind.indexing.search_index|.
+
+`mind.indexing.search_index(`                         *mind.indexing.search_index*
+  {tree}`,`
+  {prompt}`,`
+  {filter}`,`
+  {f}`,`
+  {opts}
+`)`
+    Search a node in {tree}, indexed.
+
+    This is a powerful function that allows to quickly locate a node by using
+    the |vim.ui.select| API. You can set the {prompt} as well as a {filter}.
+    The filter must be function taking a node and returning `true` or `false.`
+    Setting `nil` for {filter} is unfiltering.
+
+    {f} is expected to get the chosen `item`, which is a table containing the
+    following elements:
+
+    `path`: path to the node.
+    `parent`: parent node.
+    `node`: located node.
+
+Arguments:~
+    {tree}   the tree to index and search in.
+    {prompt} the index prompt.
+    {filter} a node filtering function to preclude nodes from appearing in the
+             index
+    {f}      the sink function receiving the picked item.
+    {opts}   user defined options.
+
+                                                           *mind-lua-api-keymap*
+Keymap API~
+
+Keymaps are a way to define keybindings via namespaces, so overriding a key is
+possible, depending on the context. The idea is that Mind will set keymaps
+depending on its state, and users provide the keybindings inside each
+namespaced keymaps. For instance, a user might want to use the `o` key to
+insert a new node under the cursor node in the normal keymap, but `o` should
+instead move the selected node under the cursor node in the selection keymap.
+
+Have a look at |mind-config-keymaps| for a further understanding of how it
+works.
+
+`mind.keymap.KeymapSelector`                          *mind.keymap.KeymapSelector*
+    Keymaps are namespaced. Selectors allow to switch namespaces.
+
+    You have access to the following selectors:
+
+Variants:~
+    `KeymapSelector.NORMAL`    selects the normal keymap.
+    `KeymapSelector.SELECTION` selects the selection keymap, which is enabled
+                             when a node is selected.
+
+`mind.keymap.get_keymap()`                                *mind.keymap.get_keymap*
+    Get the currently active keymap.
+
+`mind.keymap.set_keymap(`{selector}`)`                      *mind.keymap.set_keymap*
+    Set the currently active keymap.
+
+Arguments:~
+    {selector} the |mind.keymap.KeymapSelector| to set the currently keymap
+    to.
+
+                                                             *mind-lua-api-node*
+Node API~
+    The Node API contains everything that is required to operate tree nodes at
+    the low level. That means creating, deleting, renaming, selecting, moving,
+    etc.
+
+    However, most of the useful UI interaction is made by using a combination
+    of the Node API and the UI API (see |mind-lua-api-ui|). Specific workflows
+    can be obtained by using both APIs. For instance, selecting nodes via the
+    line cursor and selection keymap are the only way users can interact with
+    Mind in the UI, but if you code your own workflow, you have access to much
+    more functions.
+
+`mind.node.MoveDir`                                            *mind.node.MoveDir*
+    Move direction.
+
+    Whenever a node is to be added to a tree, whether it’s a new node or an
+    already existing one, a value of this enumeration must be used to locate
+    exactly where to put the node. This is only useful because of the line
+    cursor based UI. Developers writing command functions shouldn’t need that
+    as the Node API has lower-level and more precise functions to select
+    nodes and how to insert nodes into others.
+
+Variants:~
+    `MoveDir.ABOVE`        place the node above the current one.
+    `MoveDir.BELOW`        place the node below the current one.
+    `MoveDir.INSIDE_START` place the node as child of the current one, at its
+                         beginning.
+    `MoveDir.INSIDE_END`   place the node as child of the current one, at its
+                         end.
+
+`mind.node.new_node(`{name}`,` {children}`)`                      *mind.node.new_node*
+    Create a new, detached node.
+
+Arguments:~
+    {name}     the name of the node.
+    {children} the list of node children. Pass `nil` or omit the argument if
+               you don’t want children for that node.
+
+`mind.node.get_node_by_line(`{tree}`,` {line}`)`          *mind.node.get_node_by_line*
+    Get a node at the given line in the {tree}, if it exists.
+
+    That function tries to find the node in {tree} that is located at {line}.
+    That is a direct mapping between the state of the tree (expanded /
+    collapsed nodes) and the displayed tree. Use this function if you want to
+    get the node based on buffer lines.
+
+Arguments:~
+    {tree} the tree to lookup the node in.
+    {line} the line at which the node to get is located.
+
+Return:~
+    {node} the node if found, `nil` otherwise.
+
+`mind.node.get_node_and_parent_by_line(`   *mind.node.get_node_and_parent_by_line*
+  {tree}`,`
+  {line}
+`)`
+    Same as |mind.node.get_node_by_line|, but also return the parent.
+
+Arguments:~
+    {tree} the tree to lookup the node in.
+    {line} the line at which the node to get is located.
+
+Return:~
+    {parent}, {node} the parent and the node if found, `nil` otherwise
+
+`mind.node.get_node_by_path(`                         *mind.node.get_node_by_path*
+  {tree}`,`
+  {path},
+  {create},
+`)`
+    Get a node by {path} in {tree}, along with its parent.
+
+    A path has the form `/Node1/Node2/…`, where `/` refers to the root and
+    each segment is the name of a node.
+
+    If {create} is set to `true`, non-existing nodes (including the leaf) will
+    be created automatically with the segment name. For instance, in an empty
+    tree with only a root, looking for `/Node1/Node2` with {create} set to
+    `true` will create the nodes `/Node1` and `/Node2`.
+
+Arguments:~
+    {tree}   the tree to lookup the node in.
+    {path}   the path to lookup with.
+    {create} automatically create nodes.
+
+Return:~
+    {parent}, {node} the parent and the node if found, `nil` otherwise.
+
+`mind.node.insert_node(`                                   *mind.node.insert_node*
+  {tree}`,`
+  {i}`,`
+  {node}
+`)`
+    Insert a {node} at index {i} in {tree}.
+
+    You can use a negative {i} to starts from the end back up.
+
+Arguments:~
+    {tree} the tree to insert the node in.
+    {i}    the index where to add the node.
+    {node} the node to insert.
+
+`mind.node.delete_node(`                                   *mind.node.delete_node*
+  {tree}`,`
+  {i}`,`
+`)`
+    Delete the node at index {i} in the given {tree}.
+
+    You can use a negative {i} to starts from the end back up.
+
+Arguments:~
+    {tree} the tree to delete the node from.
+    {i}    the index where to delete the node.
+
+`mind.node.find_parent_index(`                       *mind.node.find_parent_index*
+  {tree}`,`
+  {node}`,`
+`)`
+    Find the parent index of a {node} in its parent’s children in a given
+    {tree}.
+
+Arguments:~
+    {tree} the tree to look in.
+    {node} the node to get the index of.
+
+Return:~
+    {i} the index of {node} in its parent’s children, in {tree}.
+
+`mind.node.move_source_target_same_tree(` *mind.node.move_source_target_same_tree*
+  {tree}`,`
+  {src}`,`
+  {tgt}`,`
+`)`
+    Move a source node (referred to by its {src} index) at target node
+    (referred to by its {tgt} index) in the same parent tree.
+
+Arguments:~
+    {tree} the parent node to move nodes in.
+    {src}  the index of the node to move from.
+    {tgt}  the index of the node to move to
+
+                                                               *mind-lua-api-ui*
+UI API~
+    The UI API is used to create window, buffers, display trees and nodes and
+    add user interaction atop of all of the rest of the Mind APIs.
+
+`mind.ui.render(`{tree}`,` {bufnr}`,` {opts}`)`                         *mind.ui.render*
+    Render the tree in the {bufnr} buffer with the given {opts}.
+
+    This is a low-level function that you are unlikely to use, especially if
+    you are writing a command function. If you are looking for a way to render
+    your tree after you have performed some operations, you should have a look
+    at |mind.wrap_main_tree_fn| and |mind.wrap_project_tree_fn| options along
+    with the |mind.ui.rerender| function.
+
+    This function updates the render cache to reuse {tree} and {bufnr} if
+    needed.
+
+`mind.ui.rerender(`{tree}`,` {opts}`)`                              *mind.ui.rerender*
+    Re-render {tree}.
+
+    That function allows to re-render the content of a tree if it’s displayed.
+    The way it works is by setting / updating a render cache when calling
+    |mind.ui.render| in the first place. When calling |mind.ui.rerender|, the
+    render cache is inspected to check whether {tree} is the same as the one
+    displayed in the cached `bufnr`. If that’s the case, the tree is rendered
+    again, otherwise nothing is done.
+
+Arguments:~
+    {tree}  the tree to re-render
+    {opts}  user-defined options.
+
+`mind.ui.with_cursor(`{f}`)`                                  *mind.ui.with_cursor*
+    Run a command by passing it the cursor line.
+
+    The function must have the following form:
+>
+    function f(line)
+      -- …
+    end
+<
+    Where {line} is the line number of the cursor.
+
+Arguments:~
+    {f} the function to run with the line number.
+
+`mind.ui.with_input(`                                         *mind.ui.with_input*
+  {prompt}`,`
+  {default}`,`
+  {f}
+`)`
+    Ask the user for input with a given {prompt} and run the {f} function on
+    its result if provided. The optional {default} can be provided to set a
+    default input response.
+
+Arguments:~
+    {prompt}  the input prompt.
+    {default} the default input response.
+    {f}       the function to run with the provided input.
+
+`mind.ui.with_confirmation(`                           *mind.ui.with_confirmation*
+  {prompt}`,`
+  {f}
+`)`
+    Ask the sure to confirm with a given {prompt} and the operation by typing
+    `y` or `n`. If the user has typed `y`, {f} is run, otherwise the whole
+    operation is aborted.
+
+Arguments:~
+    {prompt}  the input prompt.
+    {f}       the function to run with confirmed.
+
+==============================================================================
+CONFIGURATION                                                      *mind-config*
+
+The configuration option of Mind can be passed to |mind.setup| to customize
+the way it works. Some Lua functions, especially the ones from the
+|mind-lua-api-main| API, also takes options that can override the ones defined
+in |mind.setup|.
+
+                                                       *mind-config-persistence*
+The `persistence` section of the configuration contains options to specify
+where trees and data files are stored.
+
+`persistence.state_path`                      *mind-config-persistence.state_path*
+    Path where the global mind tree is stored.
+
+Default:~
+    `state_path = "~/.local/share/mind.nvim/mind.json"`
+
+`persistence.data_dir`                          *mind-config-persistence.data_dir*
+    Directory where to store global data files.
+
+Default:~
+    `data_dir = "~/.local/share/mind.nvim/data"`
+
+                                                              *mind-config-edit*
+The `edit` section is a small and minimal configuration layer for editing data
+files. Mind is not about markup but we can still provide a couple of
+interesting features.
+
+`edit.data_extension`                            *mind-config-edit.data_extension*
+    File extension to use when creating a data file.
+
+Default:~
+    `data_extension = ".md"`
+
+`edit.data_header`                                  *mind-config-edit.data_header*
+    Default header to put in newly created data files.
+
+    The name of the node is inserted with `%s`.
+
+Default:~
+    `data_header = "# %s"`
+
+`edit.copy_link_format`                        *mind-config-edit.copy_link_format*
+    Format string when copying links.
+
+    The link of the node is inserted with `%s`.
+
+Default:~
+    copy_link_format = "[](%s)"
+
+                                                              *mind-config-tree*
+The `tree` section groups configuration options about tree behaviors and
+setup.
+
+`tree.automatic_creation`                    *mind-config-tree.automatic_creation*
+    Whether to automatically create nodes.
+
+    This is mostly used with node paths, such as in `/Node1/Node2/…`. When
+    this option is set, any non-existing nodes, including leaves, will be
+    automatically created and they will be given textx contents based on the
+    path segments.
+
+Default:~
+    `automatic_creation = true`
+
+`tree.automatic_data_creation`          *mind-config-tree.automatic_data_creation*
+    Whether to automatically create and associate data files to nodes.
+
+Default:~
+    `automatic_data_creation = true`
+
+                                                                *mind-config-ui*
+The `ui` section is all about user interactivity and rendering.
+
+`ui.url_open`                                            *mind-config-ui.url_open*
+    Command to open URL.
+
+    The default value should be enough but you can still tweak it.
+
+Default:~
+    The default value is platform-dependent.
+
+    On Linux, `xdg-open` is used.
+    On macOS, `open` is used.
+    On Windows, `start ""` is used.
+
+`ui.width`                                                  *mind-config-ui.width*
+    Width of the tree view window.
+
+Default:~
+    `width = 30`
+
+`ui.root_marker`                                      *mind-config-ui.root_marker*
+    Marker used to identify the root of the tree (left to its name).
+
+Default:~
+    `root_marker = " "`
+
+`ui.local_marker`                                    *mind-config-ui.local_marker*
+    Marker used to identify a local root (right to its name).
+
+Default:~
+    `local_marker = "local"`
+
+`ui.data_marker`                                      *mind-config-ui.data_marker*
+    Marker used to show that a node has an associated data file.
+
+Default:~
+    `data_marker = ""`
+
+`ui.url_marker`                                        *mind-config-ui.url_marker*
+    Marker used to show that a node has a URL.
+
+Default:~
+    `url_marker = " "`
+
+
+`ui.select_marker`                                  *mind-config-ui.select_marker*
+    Marker used to show that a node is currently selected.
+
+Default:~
+    `select_marker = ""`
+
+`ui.icon_preset`                                      *mind-config-ui.icon_preset*
+    Preset icons to use in |mind-command-change_icon_menu|.
+
+    It must be a table containing a table of two text: the first one being the
+    icon and the second one its textual description.
+
+Default:~
+    icon_preset = {
+      { " ", "Sub-project" },
+      { " ", "Journal, newspaper, weekly and daily news" },
+      { " ", "For when you have an idea" },
+      { " ", "Note taking?" },
+      { "陼", "Task management" },
+      { " ", "Uncheck, empty square or backlog" },
+      { " ", "Full square or on-going" },
+      { " ", "Check or done" },
+      { " ", "Trash bin, deleted, cancelled, etc." },
+      { " ", "GitHub" },
+      { " ", "Monitoring" },
+      { " ", "Internet, Earth, everyone!" },
+      { " ", "Frozen, on-hold" },
+    }
+
+                                                      *mind-config-ui-highlight*
+The `ui.highlight` sub-section is used to change the highlighting mechanism of
+Mind. You can change them directly in your configuration file, or override
+them in a colorscheme, for instance. See |mind-highlights| for the latter
+option.
+
+`ui.highlight.closed_marker`              *mind-config-ui.highlight.closed_marker*
+    Highlight used on closed marks.
+
+Default:~
+    `closed_marker = "LineNr"`
+
+`ui.highlight.open_marker`                  *mind-config-ui.highlight.open_marker*
+    Highlight used on open marks.
+
+Default:~
+    `open_marker = "LineNr"`
+
+`ui.highlight.node_root`                      *mind-config-ui.highlight.node_root*
+    Highlight used on the name of the root node.
+
+Default:~
+    `node_root = "Function"`
+
+`ui.highlight.leaf_root`                      *mind-config-ui.highlight.node_leaf*
+    Highlight used on the name of regular nodes with no children.
+
+Default:~
+    `node_leaf = "String"`
+
+`ui.highlight.leaf_parent`                  *mind-config-ui.highlight.node_parent*
+    Highlight used on the name of regular nodes with children.
+
+Default:~
+    `node_parent = "Title"`
+
+`ui.highlight.local_marker`                *mind-config-ui.highlight.local_marker*
+    Highlight used on the local marker.
+
+Default:~
+    `local_marker = "Comment"`
+
+`ui.highlight.data_marker`                  *mind-config-ui.highlight.data_marker*
+    Highlight used on the data marker.
+
+Default:~
+    `data_marker = "Comment"`
+
+`ui.highlight.url_marker`                    *mind-config-ui.highlight.url_marker*
+    Highlight used on the url marker.
+
+Default:~
+    `url_marker = "Comment"`
+
+`ui.highlight.modifier_empty`            *mind-config-ui.highlight.modifier_empty*
+    Highlight used on empty nodes (i.e. no children and no data).
+
+Default:~
+    `modifier_empty = "Comment"`
+
+`ui.highlight.select_marker`              *mind-config-ui.highlight.select_marker*
+    Highlight used on the selection marker.
+
+Default:~
+    `select_marker = "Error"`
+
+                                                           *mind-config-keymaps*
+The `keymaps` sub-section is used to set keybindings for keymaps while
+interacting with a tree. It has two sub-section: `keymaps.normal` for every
+keybindings in the normal keymap, and `keymaps.selection` for every
+keybindings in the selection keymap (i.e. when a node is selected).
+
+For a given keymap, a table is associated for which the key are the actual key
+to press and the value are either a string representing the command name (see
+|mind-lua-api-commands-declarative|).
+
+Default:~
+    normal = {
+      ["<cr>"] = "open_data",
+      ["<s-cr>"] = "open_data_index",
+      ["<tab>"] = "toggle_node",
+      ["<s-tab>"] = "toggle_node",
+      ["/"] = "select_path",
+      ["$"] = "change_icon_menu",
+      c = "add_inside_end_index",
+      I = "add_inside_start",
+      i = "add_inside_end",
+      l = "copy_node_link",
+      L = "copy_node_link_index",
+      d = "delete",
+      D = "delete_file",
+      O = "add_above",
+      o = "add_below",
+      q = "quit",
+      r = "rename",
+      R = "change_icon",
+      u = "make_url",
+      x = "select",
+    }
+
+    selection = {
+      ["<cr>"] = "open_data",
+      ["<s-tab>"] = "toggle_node",
+      ["/"] = "select_path",
+      I = "move_inside_start",
+      i = "move_inside_end",
+      O = "move_above",
+      o = "move_below",
+      q = "quit",
+      x = "select",
+    }
+
+==============================================================================
+HIGHLIGHTS                                                     *mind-highlights*
+
+`MindClosedMarker`                                      *mind-hl-MindClosedMarker*
+    Highl used on closed marks
+
+`MindOpenMarker`                                          *mind-hl-MindOpenMarker*
+  Highlight used on open marks.
+
+`MindNodeRoot`                                              *mind-hl-MindNodeRoot*
+  Highlight used on the name of the root node.
+
+`MindNodeLeaf`                                              *mind-hl-MindNodeLeaf*
+  Highlight used on regular nodes with no children.
+
+`MindNodeParent`                                          *mind-hl-MindNodeParent*
+  Highlight used on regular nodes with children.
+
+`MindLocalMarker`                                        *mind-hl-MindLocalMarker*
+  Highlight used on the local marker.
+
+`MindDataMarker`                                          *mind-hl-MindDataMarker*
+  Highlight used on the data marker.
+
+`MindURLMarker`                                            *mind-hl-MindURLMarker*
+  Highlight used on the URL marker.
+
+`MindModifierEmpty`                                    *mind-hl-MindModifierEmpty*
+  Highlight used on empty nodes (i.e. no children and no data).
+
+`MindSelectMarker`                                      *mind-hl-MindSelectMarker*
+  Highlight used on the selection marker.
+
+==============================================================================
+LICENSE                                                           *mind-license*
+
+Copyright (c) 2022, Dimitri Sabadie <dimitri.sabadie@gmail.com>
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+
+    * Redistributions in binary form must reproduce the above
+      copyright notice, this list of conditions and the following
+      disclaimer in the documentation and/or other materials provided
+      with the distribution.
+
+    * Neither the name of Dimitri Sabadie <dimitri.sabadie@gmail.com> nor the
+      names of other contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+==============================================================================
+vim:tw=78:sw=4:ts=8:ft=help:norl:

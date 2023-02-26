@@ -1,0 +1,1 @@
+local a=require("todo-comments.config")local b=require("todo-comments.jump")local c={}c.setup=a.setup;function c.reset()require("plenary.reload").reload_module("todo")require("todo-comments").setup()end;function c.disable()require("todo-comments.highlight").stop()end;function c.enable()require("todo-comments.highlight").start()end;c.jump_prev=b.prev;c.jump_next=b.next;return c
